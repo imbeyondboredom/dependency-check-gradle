@@ -283,7 +283,7 @@ class Check extends DefaultTask {
      */
     def isTestConfiguration(configuration) {
         final String name = configuration.getName().toLowerCase();
-        return name.startsWith("test") || name.endsWith("testcompile") || name.endsWith("testruntime")
+        return name.startsWith("test") || name.endsWith("testcompile") || name.endsWith("testruntime") || name.startsWith("androidTest")
     }
 }
 

@@ -17,6 +17,18 @@ class DependencyCheckConfigurationSelectionIntegSpec extends IntegrationSpec {
         true == result.success
     }
 
+    def "test android dependencies are ignored by default"() {
+        setup:
+        writeHelloWorld('com.example')
+        copyResources('skipAndroidTestGroups.gradle', 'build.gradle')
+
+        when:
+        ExecutionResult result = runTasks('dependencyCheck')
+
+        then:
+        true == result.success
+    }
+
     def "test dependencies are scanned if skipTestGroups flag is false"() {
         setup:
         writeHelloWorld('com.example')

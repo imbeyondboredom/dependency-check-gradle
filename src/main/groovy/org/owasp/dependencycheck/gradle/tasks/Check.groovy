@@ -33,6 +33,8 @@ import org.owasp.dependencycheck.dependency.Vulnerability
 import org.owasp.dependencycheck.reporting.ReportGenerator
 import org.owasp.dependencycheck.utils.Settings
 
+import java.util.regex.Pattern
+
 import static org.owasp.dependencycheck.utils.Settings.KEYS.*
 
 /**
@@ -70,6 +72,25 @@ class Check extends DefaultTask {
     def verifySettings() {
         if (config.scanConfigurations && config.skipConfigurations) {
             throw new IllegalArgumentException("you can only specify one of scanConfigurations or skipConfigurations");
+        }
+
+        if(config.skipConfigurations) {
+            config.skipConfigurations = config.skipConfigurations.collect {
+                boolean beginning = it.startsWith("*")
+                boolean end = it.endsWith("*")
+                String[] parts = it.split("\\*")
+                parts.collect{
+                    Pattern.quote(it)
+                }
+                String ret = parts.join(".*")
+                if(beginning) {
+                    ret = ".*"+ret
+                }
+                if(end) {
+                    ret = ret + ".*"
+                }
+                return ret
+            }
         }
     }
 
@@ -267,7 +288,10 @@ class Check extends DefaultTask {
      * because skipConfigurations contains the configuration's name.
      */
     def shouldBeSkipped(configuration) {
-        config.skipConfigurations.contains(configuration.name)
+        String name = configuration.getName().toLowerCase()
+        config.skipConfigurations.any {
+            name.matches(it)
+        }
     }
 
     /**
@@ -283,7 +307,17 @@ class Check extends DefaultTask {
      */
     def isTestConfiguration(configuration) {
         final String name = configuration.getName().toLowerCase();
-        return name.startsWith("test") || name.endsWith("testcompile") || name.endsWith("testruntime")
+
+        boolean result = name.startsWith("test") || name.endsWith("testcompile") || name.endsWith("testruntime") //|| name.startsWith("androidtest") || name.endsWith("testapk")
+
+        if(!result) {
+            logger.debug("This is an evaluated configuration"+ name)
+            configuration.getResolvedConfiguration().getResolvedArtifacts().collect { ResolvedArtifact artifact ->
+                logger.debug(name+"->artifact="+artifact.getName())
+            }
+        }
+
+        return result;
     }
 }
 

@@ -67,4 +67,16 @@ class DependencyCheckConfigurationSelectionIntegSpec extends IntegrationSpec {
         true == result.success
     }
 
+    def "skip custom configurations with skip wildcard"() {
+        setup:
+        writeHelloWorld('com.example')
+        copyResources('skipCustomConfigurationViaSkipWildcard.gradle', 'build.gradle')
+
+        when:
+        ExecutionResult result = runTasks('dependencyCheck --info')
+
+        then:
+        true == result.success
+    }
+
 }
